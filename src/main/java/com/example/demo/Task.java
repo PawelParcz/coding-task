@@ -1,12 +1,10 @@
 package com.example.demo;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static jdk.nashorn.internal.objects.NativeMath.max;
-import static jdk.nashorn.internal.objects.NativeMath.min;
 
 
 public class Task {
@@ -16,13 +14,22 @@ public class Task {
    */
 
     public static List<Person> getActivePlayersByScoreDesc(List<Person> people) {
-
-        return people.stream()
+        List<Integer> listScoreWithActive = people.stream()
                 .filter(p -> p.isActive() == true)
-                .collect(Collectors.toList())
-                .stream().filter((p -> p.getScore() > 0)).sorted()
+                .map(p -> p.getScore()).sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
+        List<Person> listPeople = new ArrayList<>();
+
+        for (Person s : people) {
+            for (Integer i : listScoreWithActive) {
+                if (s.getScore().equals(i)) {
+                    listPeople.add(s);
+                    return listPeople;
+                }
+            }
+        }
+        return listPeople;
     }
 
   /*
@@ -33,15 +40,13 @@ public class Task {
         people = List.of(new Person("name", 2, group, true),
                 new Person("name", 1, group, true)
         );
-        return people.stream()
+        people = people.stream()
                 .filter(p -> p.getTeam().equals(group))
                 .collect(Collectors.toList())
                 .stream()
                 .filter(p -> p.isActive() == true)
-                .collect(Collectors.toList())
-                .stream().filter((p -> p.getScore() > 0)).sorted()
                 .collect(Collectors.toList());
-
+        return getActivePlayersByScoreDesc(people);
 
     }
 
@@ -51,20 +56,18 @@ public class Task {
      */
     public static Group getGroupWithHighestScore(List<Person> people) {
         List<Integer> scoreList = people.stream().map(p -> p.getScore()).collect(Collectors.toList());
-
-        for (int i = people.size() - 1; 0 <= i; i--) {
-            for (int j = people.size() - 1; 0 <= j; j--) {
-                if (max(scoreList.get(i)) > max(scoreList.get(j + 1))) {
-                    return people.get(i).getTeam();
-                } else if (max(scoreList.get(i)) == max(scoreList.get(j + 1))) {
-                    List<Boolean> activList = people.stream().map(p -> p.isActive() == false).collect(Collectors.toList());
-                    if (min(activList.get(i)) < min(activList.get(j))) {
-                        return people.get(i).getTeam();
-                    } else if (min(activList.get(i)) == min(activList.get(j))) {
-                        return people.get(j).getTeam();
-                    }
-                }
-            }
+        Group group;
+        int score1 = people.stream().filter(p -> p.getTeam().equals(Group.G1)).map(p -> p.getScore()).reduce(0, (a, b) -> a + b);
+        int score2 = people.stream().filter(p -> p.getTeam().equals(Group.G2)).map(p -> p.getScore()).reduce(0, (a, b) -> a + b);
+        int score3 = people.stream().filter(p -> p.getTeam().equals(Group.G3)).map(p -> p.getScore()).reduce(0, (a, b) -> a + b);
+        if (score1 > score2 && score1 > score3) {
+            return Group.G1;
+        } else if (score2 > score1 && score2 > score3) {
+            return Group.G2;
+        } else if (score3 > score2 && score3 > score1) {
+            return Group.G3;
+        } else if (score1 == score2 || score1 == score3 || score2 == score3) {
+            return Group.G1;
         }
         return null;
     }
@@ -74,16 +77,16 @@ public class Task {
   Pojedynczy String powinien mieć format: "NazwaGrupy CałkowityWynik  [ilość nieaktywnych członków]"
    */
 
-    public static List<String> printPoints(List<Person> people) {
-        List<String> scoreSort = people.stream()
-                .map(p->p.getScore()).sorted().map(p->p.toString()).collect(Collectors.toList());
-        for (int i = 0; i < people.size(); i++) {
-           List<String> newListAd=new ArrayList<>();
-           newListAd.add(people.get(i).getTeam().name()+scoreSort.get(i)+
-                   people.stream().filter(a->a.isActive()==true).collect(Collectors.toList()));
-                  // (people.stream().filter(p->p.isActive()==false).count());
-           return newListAd;
-        }
-     return null;
+    public static String printPoints(List<Person> people) {
+        Group group;
+        String nazwaGr= getActivePlayersByScoreDesc(people).stream().map(p->p.getTeam().getDeclaringClass().getName()).toString();
+        String wynik=getActivePlayersByScoreDesc(people).stream().map(p->p.getScore()).toString();
+       long ilość= people.stream().map(p->p.isActive()==false).count();
+
+       String il= nazwaGr+wynik+ilość;
+
+       return il;
+
+
     }
 }
